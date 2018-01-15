@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<meta charset="utf-8">
+<head>
+
+    <script src="//d3js.org/d3.v3.min.js"></script>
+    <style>
+        body{
+            display:block;
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+<div id="chart" align="center">
+
+    <script>
+
+        var chord = d3.layout.chord()
+            .padding(.05)
+            .sortSubgroups(d3.descending)
+            .matrix([[	0,	1,	1,	1,	0,	0,	0,	0,	0,	0,	],	//Resevoir Dogs
+                [	1,	0,	0,	0,	0,	0,	0,	1,	0,	0,	],	//True Romance
+                [	1,	0,	0,	0,	0,	1,	0,	0,	0,	0,	],	//Pulp Fiction
+                [	1,	0,	0,	0,	0,	0,	0,	0,	0,	0,	],	//Natural Born Killers
+                [	0,	0,	0,	0,	0,	1,	1,	0,	0,	0,	],	//From Disk Till Dawn
+                [	0,	0,	1,	0,	1,	0,	1,	0,	1,	0,	],	//Kill Bill
+                [	0,	0,	0,	0,	1,	1,	0,	0,	0,	0,	],	//Grindhouse- Deathproof
+                [	0,	1,	0,	0,	0,	0,	0,	0,	0,	1,	],	//Inglorious Basterds
+                [	0,	0,	0,	0,	0,	1,	0,	0,	0,	0,	],	//Django Unchained
+                [	0,	0,	0,	0,	0,	0,	0,	1,	0,	0,	]]);//The Hateful Eight
+
+        var w = 800,
+            h = 800,
+            r0= Math.min(w,h)*.41,
+            r1= r0 * 1.1;
+
+        var fill = d3.scale.ordinal()
+            .domain(d3.range(10))
+            .range(["#A80018", "#986B65","#F09018", "#C5B34D", "#CA8486", "#F0D800", "#242222", "#313D3B",
+                "#452317",
+                "#0052A4"]);
+
+        var svg = d3.select("#chart")
+            .append("svg:svg")
+                .attr("width",w)
+                .attr("height",h)
+            .append("svg:g")
+            .attr("transform","translate("+w/2+","+h/2+")");
+
+        svg.append("svg:g")
+            .selectAll("path")
+                .data(chord.groups)
+            .enter().append("svg:path")
+            .style("fill",function(d){return fill(d.index);})
+            .style("stroke", function(d){return fill(d.index);})
+            .attr("d",d3.svg.arc().innerRadius(r0).outerRadius(r1))
+            .on("mouseover", fade(0.1))
+            .on("mouseout", fade(1));
+
+        var ticks = svg.append("svg:g")
+            .selectAll("g")
+            .data(chord.groups)
+            .enter().append("svg:g")
+            .selectAll("g")
+            .data(groupTicks)
+            .enter().append("svg:g")
+            .attr("transform", function(d) {
+                return "rotate(" + (d.angle * 180 / Math.PI - 90) + ")"
+                    + "translate(" + r1 + ",0)";
+
+            });
+
+        ticks.append("svg:line")
+            .attr("x1",1)
+            .attr("y1",0)
+            .attr("x2",5)
+            .attr("y2",0)
+            .style("stoke","#000");
+
+        ticks.append("svg:text")
+            .attr("x",10)
+            .attr("dy","0.5em")
+            .attr("text-anchor",function(d){return d.angle > Math.PI?"rotate(180)translate(-16)":null;})
+            .text(function(d) {return d.label;});
+
+        svg.append("svg:g")
+            .attr("class","chord")
+            .selectAll("path")
+            .data(chord.chords)
+            .enter().append("svg:path")
+            .style("fill", function(d){return fill(d.target.index);})
+            .attr("d",d3.svg.chord().radius(r0))
+            .style("opacity",1);
+
+
+        /** Returns an array of tick angles and labels, given a group. */
+        function groupTicks(d) {
+            var k = (d.endAngle - d.startAngle) / d.value;
+            var movie = (["Reservoir Dogs",
+                "True Romance",
+                "Pulp Fiction",
+                "Natural Born Killers",
+                "From Dusk till Dawn",
+                "Kill Bill Volume 1 & 2",
+                "Grindhouse - DeathProof",
+                "Inglourious Basterds",
+                "Django Unchained",
+                "The Hateful Eight"	])
+            return d3.range(0, d.value, 100).map(function(v, i) {
+                return {
+                    angle: v * k + d.startAngle,
+                    label: i = movie[d.index]
+                };
+            });
+        }
+
+        /** Returns an event handler for fading a given chord group. */
+        function fade(opacity){
+            return function(g,i){
+                svg.selectAll("g.chord path")
+                    .filter(function(d){return d.source.index != i && d.target.index != i;})
+                    .transition()
+                    .style("opacity", opacity)
+            };
+        }
+
+    </script>
+</div>
+
+</body>
+</html>
